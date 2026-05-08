@@ -1,0 +1,245 @@
+---
+title: "Photos API endpoints reference"
+description: "Attach and manage photos for places in SolSQL. Each photo stores a place ID, public image URL, and optional description. Retrieve all photos for a place."
+---
+
+Photos are attached to places. Each photo record stores the ID of the place it belongs to, a URL pointing to the image, and an optional description. You can retrieve all photos for a place in one request using the `place/{p_place_id}` route.
+
+---
+
+## Endpoints
+
+### GET /api/Photos
+
+Returns all photos in the system.
+
+```bash
+curl -X GET https://your-api-host/api/Photos
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "photo_id": 1,
+    "place_id": 42,
+    "url": "https://example.com/photos/plaza-mayor.jpg",
+    "description": "Main square at sunset"
+  }
+]
+```
+
+<ResponseField name="photo_id" type="integer">
+  Unique identifier for the photo.
+</ResponseField>
+
+<ResponseField name="place_id" type="integer">
+  ID of the place this photo is attached to.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  Public URL of the image.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Optional human-readable caption for the photo.
+</ResponseField>
+
+---
+
+### GET /api/Photos/{id}
+
+Returns a single photo by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The `photo_id` of the photo to retrieve.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/Photos/1
+```
+
+**Response — 200 OK**
+
+```json
+{
+  "photo_id": 1,
+  "place_id": 42,
+  "url": "https://example.com/photos/plaza-mayor.jpg",
+  "description": "Main square at sunset"
+}
+```
+
+**Response — 404 Not Found**
+
+```json
+{ "message": "La foto no existe" }
+```
+
+**Response — 500 Internal Server Error**
+
+```json
+{ "message": "Error al obtener la foto", "detail": "<error message>" }
+```
+
+---
+
+### GET /api/Photos/place/{p_place_id}
+
+Returns all photos attached to a specific place.
+
+#### Path parameters
+
+<ParamField path="p_place_id" type="integer" required>
+  The ID of the place whose photos you want to retrieve.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/Photos/place/42
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "photo_id": 1,
+    "place_id": 42,
+    "url": "https://example.com/photos/plaza-mayor.jpg",
+    "description": "Main square at sunset"
+  },
+  {
+    "photo_id": 2,
+    "place_id": 42,
+    "url": "https://example.com/photos/plaza-mayor-night.jpg",
+    "description": "Night view"
+  }
+]
+```
+
+**Response — 404 Not Found**
+
+Returned when no photos exist for the given place.
+
+```json
+"No hay fotos para este lugar."
+```
+
+---
+
+### POST /api/Photos
+
+Creates a new photo record attached to a place.
+
+#### Request body
+
+<ParamField body="place_id" type="integer" required>
+  The ID of the place this photo belongs to.
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  The public URL of the image.
+</ParamField>
+
+<ParamField body="description" type="string">
+  An optional caption or description for the photo.
+</ParamField>
+
+```bash
+curl -X POST https://your-api-host/api/Photos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "place_id": 42,
+    "url": "https://example.com/photos/plaza-mayor.jpg",
+    "description": "Main square at sunset"
+  }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully inserted registration." }
+```
+
+---
+
+### PUT /api/Photos/{id}
+
+Updates the URL and description of an existing photo. The `place_id` is not updated.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The `photo_id` of the photo to update.
+</ParamField>
+
+#### Request body
+
+<ParamField body="url" type="string" required>
+  The new URL for the image.
+</ParamField>
+
+<ParamField body="description" type="string">
+  The updated caption or description.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Photos/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/photos/plaza-mayor-hd.jpg",
+    "description": "Main square at golden hour"
+  }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully updated registration." }
+```
+
+---
+
+### DELETE /api/Photos/{id}
+
+Deletes a photo by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The `photo_id` of the photo to delete.
+</ParamField>
+
+```bash
+curl -X DELETE https://your-api-host/api/Photos/1
+```
+
+**Response — 204 No Content**
+
+The photo was deleted successfully. No response body is returned.
+
+**Response — 404 Not Found**
+
+```json
+{ "message": "La foto no existe" }
+```
+
+**Response — 500 Internal Server Error**
+
+```json
+{ "message": "Error interno del servidor", "detail": "<error message>" }
+```
+
+---
+
+## Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Request succeeded. |
+| 204 | Photo deleted successfully (no body). |
+| 404 | The requested photo or place has no photos. |
+| 500 | A server or database error occurred. The response body contains `message` and `detail` fields. |

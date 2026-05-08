@@ -1,0 +1,116 @@
+---
+title: "Deploy SolSQL API with Docker"
+description: "Build and run SolSQL API as a Docker container using the included multi-stage Dockerfile, configure the MySQL connection string, and start on port 8080."
+---
+
+SolSQL API ships with a multi-stage Dockerfile that produces a lean ASP.NET Core 8 runtime image. This guide covers building the image, setting the MySQL connection string, and starting the container — either directly with Docker or through Docker Compose.
+
+<Warning>
+  The `appsettings.json` file in the repository contains a real MySQL connection string with credentials. Do not commit or distribute this file in production environments. Use environment variables or a secrets manager to inject the connection string at runtime.
+</Warning>
+
+<Steps>
+  <Step title="Review the Dockerfile">
+    The project uses a two-stage build. The first stage compiles the application with the .NET 8 SDK; the second stage produces a minimal runtime image and exposes port **8080**.
+
+    ```dockerfile
+    FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+    WORKDIR /src
+
+    # Como el .csproj está junto al Dockerfile, copiamos directo
+    COPY ["api_solsql/api_solsql.csproj", "./"]
+    RUN dotnet restore "api_solsql.csproj"
+
+    # Copiamos todo el proyecto
+    COPY . .
+    RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+
+    # Imagen final
+    FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+    WORKDIR /app
+    COPY --from=build /app/publish .
+    EXPOSE 8080
+    ENTRYPOINT ["dotnet", "api_solsql.dll"]
+    ```
+  </Step>
+
+  <Step title="Configure the MySQL connection string">
+    The API reads the database connection from the `Connection_mysql` key in `appsettings.json`:
+
+    ```json
+    {
+      "ConnectionStrings": {
+        "Connection_mysql": "Server=<host>; Database=<db>; user=<user>; password=<password>; port=<port>;"
+      }
+    }
+    ```
+
+    Replace the placeholder values with your MySQL server details before building, or override the value at runtime using an environment variable:
+
+    ```bash
+    ConnectionStrings__Connection_mysql="Server=myhost; Database=mydb; user=myuser; password=mypassword; port=3306;"
+    ```
+
+    <Note>
+      ASP.NET Core maps the double-underscore (`__`) separator in environment variable names to nested JSON keys, so `ConnectionStrings__Connection_mysql` overrides `ConnectionStrings.Connection_mysql` without modifying any file.
+    </Note>
+  </Step>
+
+  <Step title="Build the Docker image">
+    Run the following command from the repository root (the directory that contains the `api_solsql/` folder and `docker-compose.yml`):
+
+    ```bash
+    docker build -f api_solsql/Dockerfile -t apisolsql .
+    ```
+
+    The build restores NuGet packages, compiles the project in Release mode, and copies the published output into the final runtime image.
+  </Step>
+
+  <Step title="Run the container">
+    Start the container and map port 8080 to your host:
+
+    ```bash
+    docker run -p 8080:8080 \
+      -e "ConnectionStrings__Connection_mysql=Server=myhost; Database=mydb; user=myuser; password=mypassword; port=3306;" \
+      apisolsql
+    ```
+
+    The API will be available at `http://localhost:8080`. Open `http://localhost:8080/swagger` to verify the service is running.
+  </Step>
+
+  <Step title="Use Docker Compose (optional)">
+    The repository includes a `docker-compose.yml` for convenience:
+
+    ```yaml
+    services:
+      api_solsql:
+        image: ${DOCKER_REGISTRY-}apisolsql
+        build:
+          context: .
+          dockerfile: api_solsql/Dockerfile
+    ```
+
+    You can extend this file to add environment variables, port mappings, and a MySQL service. To build and start with Compose:
+
+    ```bash
+    docker compose up --build
+    ```
+
+    To pass the connection string without modifying the Compose file, set it in a `.env` file or export it in your shell before running `docker compose up`.
+
+    <Tip>
+      Create a `.env` file in the repository root and add `ConnectionStrings__Connection_mysql=...` to keep your credentials out of shell history and version control. Add `.env` to `.gitignore`.
+    </Tip>
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first API call and verify authentication is working.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/concepts/authentication">
+    Understand the login flow and how roles map to user types.
+  </Card>
+</CardGroup>

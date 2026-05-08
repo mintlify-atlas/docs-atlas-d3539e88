@@ -1,0 +1,53 @@
+---
+title: "Users API: manage accounts and authentication"
+description: "Full CRUD for SolSQL user accounts across six endpoints. Passwords are BCrypt-hashed automatically on create and conditionally re-hashed on update."
+---
+
+The Users API gives you complete control over user accounts: list all users, look up a single user by ID or by status, create new accounts, update existing ones, and delete records. All write operations go through stored procedures; passwords are hashed with BCrypt before they are persisted.
+
+## Password hashing behavior
+
+<Note>
+  When you **create** a user, the API always BCrypt-hashes the plain-text password you supply before storing it.
+
+  When you **update** a user, the API checks whether the password value you send already begins with `$2a$`. If it does, the value is stored as-is — no re-hashing occurs. If it does not start with `$2a$`, the API treats it as a new plain-text password and hashes it before saving.
+</Note>
+
+## Endpoints at a glance
+
+<CardGroup cols={2}>
+  <Card title="GET /api/vw_user" icon="list">
+    Return all user accounts.
+  </Card>
+  <Card title="GET /api/vw_user/{id}" icon="user">
+    Return a single user by their numeric ID. Returns `404` if not found.
+  </Card>
+  <Card title="GET /api/vw_user/status/{status}" icon="filter">
+    Filter users by status. Pass `1` for active accounts or `0` for inactive accounts.
+  </Card>
+  <Card title="POST /api/vw_user" icon="plus">
+    Create a new user. Supply `Name`, `Email`, `Password` (plain text), and `Role`.
+  </Card>
+  <Card title="PUT /api/vw_user/{id}" icon="pencil">
+    Update an existing user by ID. All fields — including `Status` — can be changed.
+  </Card>
+  <Card title="DELETE /api/vw_user/{id}" icon="trash">
+    Delete a user by ID.
+  </Card>
+</CardGroup>
+
+## User object fields
+
+Every user record contains these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Id` | integer | Auto-generated unique identifier. |
+| `Name` | string | Full name of the user. |
+| `Email` | string | Email address used for login. |
+| `Password` | string | BCrypt hash of the user's password. |
+| `Role` | integer | `1` = regular user, `2` = administrator. |
+| `Status` | integer | `1` = active, `0` = inactive. |
+| `Created_at` | datetime | UTC timestamp of account creation. |
+
+For full request/response documentation and curl examples for every endpoint, see the [endpoints reference](/api/users/endpoints).

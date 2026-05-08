@@ -1,0 +1,238 @@
+---
+title: "Favorites API endpoints reference"
+description: "Let users bookmark places with the Favorites API. Add, retrieve by user or user-place pair, and remove favorites by primary key or user-place combination."
+---
+
+The Favorites API lets users bookmark places they want to revisit. Each favorite record links a user (`id`) to a place (`place_id`). You can retrieve favorites by user, check whether a specific user-place pair is already favorited, or remove a favorite using either its primary key or the user-place combination directly.
+
+---
+
+## GET /api/Favorites
+
+Returns all favorites in the system.
+
+### Response
+
+<ResponseField name="favorite_id" type="integer">
+  Unique identifier for the favorite record.
+</ResponseField>
+
+<ResponseField name="id" type="integer">
+  ID of the user who saved the favorite.
+</ResponseField>
+
+<ResponseField name="name_user" type="string">
+  Display name of the user.
+</ResponseField>
+
+<ResponseField name="place_id" type="integer">
+  ID of the favorited place.
+</ResponseField>
+
+<ResponseField name="name_place" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="added_date" type="string (datetime)">
+  ISO 8601 timestamp of when the favorite was added.
+</ResponseField>
+
+```bash
+curl -X GET https://your-api-host/api/Favorites
+```
+
+---
+
+## GET /api/Favorites/{id}
+
+Returns a single favorite record by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The unique ID of the favorite record to retrieve.
+</ParamField>
+
+### Response
+
+Returns a single `Favorites` object. See field descriptions under [GET /api/Favorites](#get-apifavorites).
+
+```bash
+curl -X GET https://your-api-host/api/Favorites/8
+```
+
+### Error codes
+
+| Code | Description                               |
+|------|-------------------------------------------|
+| 404  | No favorite found with the given `id`.    |
+| 500  | Internal server error.                    |
+
+---
+
+## GET /api/Favorites/byUser/{user_id}
+
+Returns all favorites saved by a specific user.
+
+### Path parameters
+
+<ParamField path="user_id" type="integer" required>
+  The ID of the user whose favorites you want to retrieve.
+</ParamField>
+
+### Response
+
+Returns an array of `Favorites` objects. See field descriptions under [GET /api/Favorites](#get-apifavorites).
+
+```bash
+curl -X GET https://your-api-host/api/Favorites/byUser/3
+```
+
+### Error codes
+
+| Code | Description            |
+|------|------------------------|
+| 500  | Internal server error. |
+
+<Note>
+  This endpoint returns an empty array if the user has no favorites — it does not return `404`.
+</Note>
+
+---
+
+## GET /api/Favorites/user/{userId}/place/{placeId}
+
+Returns the favorite record for a specific user-place combination. Use this to check whether a user has already saved a particular place before showing a "Save" button.
+
+### Path parameters
+
+<ParamField path="userId" type="integer" required>
+  The ID of the user.
+</ParamField>
+
+<ParamField path="placeId" type="integer" required>
+  The ID of the place.
+</ParamField>
+
+### Response
+
+Returns a single `Favorites` object. See field descriptions under [GET /api/Favorites](#get-apifavorites).
+
+```bash
+curl -X GET https://your-api-host/api/Favorites/user/3/place/7
+```
+
+### Error codes
+
+| Code | Description                                                  |
+|------|--------------------------------------------------------------|
+| 404  | No favorite found for the given `userId` and `placeId`.      |
+| 500  | Internal server error.                                       |
+
+<Tip>
+  A `404` from this endpoint means the user has not yet favorited the place — safe to show an "Add to favorites" action.
+</Tip>
+
+---
+
+## POST /api/Favorites
+
+Adds a place to a user's favorites list.
+
+### Request body
+
+<ParamField body="id" type="integer" required>
+  ID of the user adding the favorite.
+</ParamField>
+
+<ParamField body="place_id" type="integer" required>
+  ID of the place to add.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a JSON success message:
+
+```json
+{
+  "message": "Favorito agregado correctamente."
+}
+```
+
+```bash
+curl -X POST https://your-api-host/api/Favorites \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": 3,
+    "place_id": 7
+  }'
+```
+
+### Error codes
+
+| Code | Description                                                              |
+|------|--------------------------------------------------------------------------|
+| 400  | The database rejected the insert (e.g., the place is already favorited). |
+| 500  | Internal server error.                                                   |
+
+<Warning>
+  If a user tries to add the same place twice, the database raises a constraint error and the API returns `400 Bad Request` with an error detail in the response body.
+</Warning>
+
+---
+
+## DELETE /api/Favorites/{id}
+
+Deletes a favorite record by its primary key.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The `favorite_id` of the record to delete.
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on successful deletion.
+
+```bash
+curl -X DELETE https://your-api-host/api/Favorites/8
+```
+
+### Error codes
+
+| Code | Description                                                         |
+|------|---------------------------------------------------------------------|
+| 400  | Database error — could not delete the record (e.g., constraint).    |
+| 500  | Internal server error.                                              |
+
+---
+
+## DELETE /api/Favorites/usuario/{idUsuario}/lugar/{idLugar}
+
+Deletes a favorite identified by the user and place combination. Use this when you want to remove a favorite without looking up its `favorite_id` first.
+
+### Path parameters
+
+<ParamField path="idUsuario" type="integer" required>
+  The ID of the user whose favorite you want to remove.
+</ParamField>
+
+<ParamField path="idLugar" type="integer" required>
+  The ID of the place to unfavorite.
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on successful deletion.
+
+```bash
+curl -X DELETE https://your-api-host/api/Favorites/usuario/3/lugar/7
+```
+
+### Error codes
+
+| Code | Description                                                         |
+|------|---------------------------------------------------------------------|
+| 400  | Database error — could not delete the record (e.g., constraint).    |
+| 500  | Internal server error.                                              |

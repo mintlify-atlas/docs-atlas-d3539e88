@@ -1,0 +1,62 @@
+---
+title: "SolSQL API: Location Discovery REST API"
+description: "SolSQL API is an ASP.NET Core 8 REST service backed by MySQL for managing places, users, comments, reactions, favorites, and geographic reference data."
+---
+
+SolSQL API powers a location-discovery platform, exposing a full suite of REST endpoints for managing places of interest, user accounts, social interactions (comments, reactions, favorites), and geographic reference data. Built on ASP.NET Core 8 with a MySQL backend, every operation routes through stored procedures for consistency and performance.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first API call in minutes with step-by-step setup instructions.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/concepts/authentication">
+    Learn how to authenticate with the API using email, password, and role.
+  </Card>
+  <Card title="Places API" icon="map-pin" href="/api/places/overview">
+    Explore, search, and manage places with full CRUD and detail views.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/auth/login">
+    Complete endpoint documentation for every resource in the API.
+  </Card>
+</CardGroup>
+
+## What you can do with SolSQL API
+
+SolSQL API provides endpoints across several resource domains:
+
+- **Places** — Create, read, update, delete, activate/deactivate, and search places of interest with rich detail views
+- **Users** — Register users, authenticate, and manage user accounts with BCrypt-hashed passwords
+- **Comments** — Post, edit, and retrieve threaded comments on places
+- **Reactions** — Record and manage user reactions (likes, etc.) on places
+- **Favorites** — Let users save and retrieve their favorite places
+- **Photos** — Attach and manage photo galleries for each place
+- **Reference Data** — Manage geographic taxonomy (departments, cities) and place types
+- **Logs & Analytics** — Query audit logs and comment statistics views
+
+## Technology stack
+
+| Component | Technology |
+|-----------|-----------|
+| Runtime | ASP.NET Core 8 (.NET 8) |
+| Database | MySQL (via Pomelo EF Core) |
+| ORM | Entity Framework Core 8 |
+| Auth | BCrypt.Net password hashing |
+| API Docs | Swagger / OpenAPI (Swashbuckle) |
+| Containerization | Docker |
+
+## Getting started
+
+<Steps>
+  <Step title="Review the quickstart">
+    Follow the [quickstart guide](/quickstart) to understand how to connect and make your first request.
+  </Step>
+  <Step title="Authenticate">
+    Call `POST /api/LoginRequest/login` with your email, password, and role to verify your credentials.
+  </Step>
+  <Step title="Explore places">
+    Use `GET /api/Places/info_rapida` to retrieve a summary list of all active places.
+  </Step>
+  <Step title="Build your integration">
+    Use the full [API Reference](/api/auth/login) to integrate comments, reactions, favorites, and more.
+  </Step>
+</Steps>

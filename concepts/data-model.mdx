@@ -1,0 +1,174 @@
+---
+title: "SolSQL API data model and entities"
+description: "Explore the SolSQL API data model: places, users, comments, reactions, favorites, photos, and the geographic hierarchy of departments and cities."
+---
+
+SolSQL API organizes its data around **places** — physical locations of interest. Places belong to cities, cities belong to departments, and place types categorize what kind of location each place is. Users interact with places through comments, reactions, and favorites, and each place can have an attached photo gallery.
+
+## Entity relationships
+
+```
+Departments
+  └── Cities (department_id → Departments)
+        └── Places (city_id → Cities, type_id → PlaceTypes)
+              ├── Photos (place_id → Places)
+              ├── Comments (place_id → Places, id → Users)
+              ├── Reactions (place_id → Places, user_id → Users)
+              └── Favorites (place_id → Places, id → Users)
+
+PlaceTypes
+  └── Places (type_id → PlaceTypes)
+```
+
+## Entities
+
+<AccordionGroup>
+  <Accordion title="Places">
+    The central entity in the data model. A place represents a physical location of interest such as a restaurant, park, or museum.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `place_id` | int (PK) | Unique identifier for the place |
+    | `name` | string | Display name of the place |
+    | `type_id` | int (FK) | References `PlaceTypes.type_id` |
+    | `name_type` | string? | Denormalized type name (nullable) |
+    | `description` | string? | Long-form description of the place |
+    | `address` | string? | Street address |
+    | `city_id` | int (FK) | References `Cities.city_id` |
+    | `name_city` | string? | Denormalized city name (nullable) |
+    | `opening_hours` | string? | Human-readable opening hours |
+    | `fees` | string? | Admission or entry fee information |
+    | `coordinates` | string? | Geographic coordinates (e.g., latitude/longitude) |
+    | `contact_phone` | string? | Contact phone number |
+    | `contact_email` | string? | Contact email address |
+    | `social_media` | string? | Social media links or handles |
+    | `status` | int? | Active/inactive flag |
+    | `creation_date` | DateTime? | When the record was created |
+  </Accordion>
+
+  <Accordion title="Users (vw_user)">
+    User accounts are exposed through the `vw_user` view. The `Password` field holds a BCrypt hash and is never returned in login responses.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `Id` | int (PK) | Unique user identifier |
+    | `Name` | string | Display name |
+    | `Email` | string | Email address (used for login) |
+    | `Password` | string | BCrypt password hash (redacted in API responses) |
+    | `Role` | int | `1` = user, `2` = admin |
+    | `Status` | int | Account status flag |
+    | `Created_at` | DateTime | Account creation timestamp |
+  </Accordion>
+
+  <Accordion title="Comments">
+    Comments are attached to places and support threaded replies through the `parent_comment_id` field.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `comment_id` | int (PK) | Unique comment identifier |
+    | `place_id` | int (FK) | References `Places.place_id` |
+    | `name_place` | string? | Denormalized place name (nullable) |
+    | `id` | int (FK) | User identifier — references `vw_user.Id` |
+    | `name` | string? | Denormalized user name (nullable) |
+    | `comment` | string? | Comment text |
+    | `parent_comment_id` | int? | References `comment_id` of the parent comment for threaded replies; `null` for top-level comments |
+    | `comment_date` | DateTime? | When the comment was posted |
+  </Accordion>
+
+  <Accordion title="Reactions">
+    A reaction records a user's response to a place (for example, a like or other reaction type).
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `id` | int (PK) | Unique reaction identifier |
+    | `user_id` | int (FK) | References `vw_user.Id` |
+    | `name_user` | string? | Denormalized user name (nullable) |
+    | `place_id` | int (FK) | References `Places.place_id` |
+    | `name_place` | string? | Denormalized place name (nullable) |
+    | `reaction_type` | string | The type of reaction (e.g., `"like"`) |
+    | `reaction_date` | DateTime? | When the reaction was recorded |
+  </Accordion>
+
+  <Accordion title="Favorites">
+    Favorites let users bookmark places for quick retrieval later.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `favorite_id` | int (PK) | Unique favorite identifier |
+    | `id` | int (FK) | User identifier — references `vw_user.Id` |
+    | `name_user` | string? | Denormalized user name (nullable) |
+    | `place_id` | int (FK) | References `Places.place_id` |
+    | `name_place` | string? | Denormalized place name (nullable) |
+    | `added_date` | DateTime? | When the user added the favorite |
+  </Accordion>
+
+  <Accordion title="Photos">
+    Each place can have multiple photos associated with it.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `photo_id` | int (PK) | Unique photo identifier |
+    | `place_id` | int (FK) | References `Places.place_id` |
+    | `url` | string? | URL to the photo resource |
+    | `description` | string? | Caption or description of the photo |
+  </Accordion>
+
+  <Accordion title="Departments">
+    Departments are the top level of the geographic hierarchy (equivalent to states or regions).
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `department_id` | int (PK) | Unique department identifier (mapped column) |
+    | `Name` | string? | Department name |
+  </Accordion>
+
+  <Accordion title="Cities">
+    Cities belong to a department and are the geographic unit assigned directly to places.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `city_id` | int (PK) | Unique city identifier (mapped column) |
+    | `Name_city` | string? | City name |
+    | `department_id` | int (FK) | References `Departments.department_id` |
+    | `Name_department` | string? | Denormalized department name (nullable) |
+  </Accordion>
+
+  <Accordion title="PlaceTypes">
+    Place types categorize places into groups such as restaurant, museum, or park.
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `type_id` | int (PK) | Unique type identifier (mapped column) |
+    | `Name` | string? | Type name |
+    | `Description` | string? | Description of the place type |
+  </Accordion>
+</AccordionGroup>
+
+## PlaceDetail view
+
+The `PlaceDetail` model is a keyless read model returned by stored procedures for place detail pages. It combines place data with contextual user-specific fields.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `place_id` | int | Place identifier |
+| `name` | string | Place name |
+| `description` | string? | Place description |
+| `address` | string? | Street address |
+| `opening_hours` | string? | Opening hours |
+| `fees` | string? | Entry fees |
+| `coordinates` | string? | Geographic coordinates |
+| `contact_phone` | string | Contact phone number |
+| `contact_email` | string | Contact email address |
+| `social_media` | string? | Social media links |
+| `tipo_lugar` | string? | Place type label |
+| `ciudad` | string? | City name |
+| `es_favorito` | int? | Whether the requesting user has favorited this place (`1` = yes) |
+| `tipo_reaccion` | string? | The requesting user's reaction type, if any |
+
+<Note>
+`PlaceDetail` is configured as a keyless entity (`HasNoKey()`) and is always populated via stored procedure calls rather than direct table queries.
+</Note>
+
+## Denormalized fields
+
+Several entities include nullable denormalized fields such as `name_city`, `name_type`, `name_place`, and `name_user`. These are populated by stored procedures that join related tables, so you get human-readable labels alongside foreign key IDs in a single response without additional lookups.

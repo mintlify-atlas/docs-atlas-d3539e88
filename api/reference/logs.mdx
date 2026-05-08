@@ -1,0 +1,157 @@
+---
+title: "Logs and analytics endpoints reference"
+description: "Read-only endpoints exposing audit logs, registration activity, and comment statistics. Includes per-date and per-user comment count aggregations."
+---
+
+The SolSQL API exposes read-only endpoints for audit logs and comment statistics. You can use these endpoints to monitor data-change activity across all tables, track user registration events, and analyze comment volume over time.
+
+<Note>
+  All endpoints on this page are **read-only**. They do not support POST, PUT, or DELETE operations.
+</Note>
+
+---
+
+## Audit logs
+
+### GET /api/vw_logs
+
+Returns the full audit log. Each entry records a data-change event on a specific table.
+
+```bash
+curl -X GET https://your-api-host/api/vw_logs
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "Id": 1,
+    "Table_name": "places",
+    "Action_type": "INSERT",
+    "description": "New place added: Parque El Poblado",
+    "action_timestamp": "2024-03-15T10:32:00"
+  }
+]
+```
+
+<ResponseField name="Id" type="integer">
+  Unique identifier for the log entry.
+</ResponseField>
+
+<ResponseField name="Table_name" type="string">
+  The name of the database table where the action occurred.
+</ResponseField>
+
+<ResponseField name="Action_type" type="string">
+  The type of operation that was performed (e.g. `INSERT`, `UPDATE`, `DELETE`).
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A human-readable summary of the action that was logged.
+</ResponseField>
+
+<ResponseField name="action_timestamp" type="string (datetime)">
+  The date and time when the action occurred, in ISO 8601 format.
+</ResponseField>
+
+---
+
+## Registration logs
+
+### GET /api/vw_logs_register
+
+Returns aggregated registration activity. Each entry groups registration events by date and action type.
+
+```bash
+curl -X GET https://your-api-host/api/vw_logs_register
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "Fecha": "2024-03-15T00:00:00",
+    "Action_type": "INSERT",
+    "Total": 12
+  }
+]
+```
+
+<ResponseField name="Fecha" type="string (datetime)">
+  The date for which this registration summary applies.
+</ResponseField>
+
+<ResponseField name="Action_type" type="string">
+  The type of registration action (e.g. `INSERT`).
+</ResponseField>
+
+<ResponseField name="Total" type="integer">
+  The number of registration events of this action type on the given date.
+</ResponseField>
+
+---
+
+## Comment statistics
+
+### GET /api/vw_totalcomments_date
+
+Returns the total number of comments grouped by date. Use this endpoint to visualize comment activity over time.
+
+```bash
+curl -X GET https://your-api-host/api/vw_totalcomments_date
+```
+
+**Response — 200 OK**
+
+```json
+[
+  { "Fecha": "2024-03-15T00:00:00", "Total": 47 },
+  { "Fecha": "2024-03-16T00:00:00", "Total": 32 }
+]
+```
+
+<ResponseField name="Fecha" type="string (datetime)">
+  The date for which the comment count is aggregated.
+</ResponseField>
+
+<ResponseField name="Total" type="integer">
+  The number of comments posted on that date.
+</ResponseField>
+
+---
+
+### GET /api/vw_totalcomments_users
+
+Returns the total number of comments grouped by user. Use this endpoint to identify the most active commenters.
+
+```bash
+curl -X GET https://your-api-host/api/vw_totalcomments_users
+```
+
+**Response — 200 OK**
+
+```json
+[
+  { "name": "Maria Lopez", "total": 38 },
+  { "name": "Carlos Ruiz", "total": 21 }
+]
+```
+
+<ResponseField name="name" type="string">
+  The name of the user who posted the comments.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  The total number of comments posted by this user.
+</ResponseField>
+
+---
+
+## Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Request succeeded. |
+| 500 | A server or database error occurred. The response body contains `message` and `error` fields with details. |

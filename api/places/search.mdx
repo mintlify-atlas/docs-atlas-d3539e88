@@ -1,0 +1,237 @@
+---
+title: "Search and explore places endpoints"
+description: "Discover places with quick-summary listings, keyword search, and rich per-place detail including optional user-specific interaction context."
+---
+
+Three read-only endpoints let you explore the places catalog beyond simple ID lookups. Use `info_rapida` for fast bulk listings, `buscar` for keyword-driven search, and `{id}/detalle` when you need the full profile of a single place — optionally enriched with a specific user's favorites and reactions.
+
+---
+
+## GET /api/Places/info_rapida
+
+Returns a lightweight summary for every place in the database. This endpoint calls the `pa_obtener_info_general_lugares` stored procedure and returns an array of `vw_general_lugar` objects, which are optimized for listing views and map interfaces.
+
+```bash
+curl -X GET https://your-api-host/api/Places/info_rapida
+```
+
+### Response
+
+An array of objects with the following fields:
+
+<ResponseField name="place_id" type="integer">
+  Unique identifier for the place.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Short text description of the place.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Street or postal address.
+</ResponseField>
+
+<ResponseField name="opening_hours" type="string">
+  Opening hours as a free-form string.
+</ResponseField>
+
+<ResponseField name="tipo_lugar" type="string">
+  Human-readable label for the place type.
+</ResponseField>
+
+<ResponseField name="ciudad" type="string">
+  Name of the city where the place is located.
+</ResponseField>
+
+<ResponseField name="url_foto" type="string">
+  URL of the place's primary photo, if available.
+</ResponseField>
+
+**Example response**
+
+```json
+[
+  {
+    "place_id": 1,
+    "name": "Museo del Oro",
+    "description": "World-renowned gold museum in Bogotá.",
+    "address": "Cra. 6 #15-88, Bogotá",
+    "opening_hours": "Tue–Sat 9 am–6 pm, Sun 10 am–4 pm",
+    "tipo_lugar": "Museo",
+    "ciudad": "Bogotá",
+    "url_foto": "https://cdn.example.com/photos/museo-del-oro.jpg"
+  }
+]
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Internal server error while retrieving place summaries. |
+
+---
+
+## GET /api/Places/buscar
+
+Searches places by a keyword term. The query calls the `pa_buscar_lugares` stored procedure and returns an array of `vw_general_lugar` objects that match the search term.
+
+### Query parameters
+
+<ParamField query="busqueda" type="string" required>
+  The search keyword or phrase. The endpoint returns a `400` error if this parameter is missing or blank.
+</ParamField>
+
+```bash
+curl -X GET "https://your-api-host/api/Places/buscar?busqueda=museo"
+```
+
+### Response
+
+An array of `vw_general_lugar` objects matching the search term. The fields are identical to those described for [GET /api/Places/info_rapida](#get-apiplaces-info-rapida).
+
+**Example response**
+
+```json
+[
+  {
+    "place_id": 1,
+    "name": "Museo del Oro",
+    "description": "World-renowned gold museum in Bogotá.",
+    "address": "Cra. 6 #15-88, Bogotá",
+    "opening_hours": "Tue–Sat 9 am–6 pm, Sun 10 am–4 pm",
+    "tipo_lugar": "Museo",
+    "ciudad": "Bogotá",
+    "url_foto": "https://cdn.example.com/photos/museo-del-oro.jpg"
+  }
+]
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `400` | The `busqueda` parameter is missing or empty. |
+| `500` | Internal server error while executing the search. |
+
+---
+
+## GET /api/Places/\{id\}/detalle
+
+Returns the full detail profile for a single place. This endpoint calls the `pa_detalle_lugar_interaccion_usuario` stored procedure, which can optionally include data about whether a specific user has favorited the place or left a reaction.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place whose detail you want to retrieve.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="userId" type="integer">
+  The numeric ID of the authenticated user. When provided, the response includes that user's interaction state for the place — whether they have marked it as a favorite and which reaction type (if any) they have applied.
+</ParamField>
+
+<Tip>
+  The `userId` parameter is optional. You can call this endpoint without it to retrieve the full place profile with no user-specific data. Pass `userId` only when you need to render personalized UI elements such as a filled heart icon or a displayed reaction.
+</Tip>
+
+```bash
+# Without user context
+curl -X GET https://your-api-host/api/Places/7/detalle
+
+# With user context
+curl -X GET "https://your-api-host/api/Places/7/detalle?userId=3"
+```
+
+### Response
+
+A single `PlaceDetail` object with the following fields:
+
+<ResponseField name="place_id" type="integer">
+  Unique identifier for the place.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Text description of the place.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Street or postal address.
+</ResponseField>
+
+<ResponseField name="opening_hours" type="string">
+  Opening hours as a free-form string.
+</ResponseField>
+
+<ResponseField name="fees" type="string">
+  Admission or usage fees.
+</ResponseField>
+
+<ResponseField name="coordinates" type="string">
+  Geographic coordinates (e.g. `"4.7110,-74.0721"`).
+</ResponseField>
+
+<ResponseField name="contact_phone" type="string">
+  Contact phone number.
+</ResponseField>
+
+<ResponseField name="contact_email" type="string">
+  Contact email address.
+</ResponseField>
+
+<ResponseField name="social_media" type="string">
+  Social media handle or URL.
+</ResponseField>
+
+<ResponseField name="tipo_lugar" type="string">
+  Human-readable label for the place type.
+</ResponseField>
+
+<ResponseField name="ciudad" type="string">
+  Name of the city where the place is located.
+</ResponseField>
+
+<ResponseField name="es_favorito" type="integer">
+  Whether the requesting user has favorited this place. `1` = yes, `0` = no. `null` when no `userId` was supplied.
+</ResponseField>
+
+<ResponseField name="tipo_reaccion" type="string">
+  The reaction type the requesting user has applied to this place (e.g. `"me gusta"`, `"interesante"`). `null` if the user has not reacted or no `userId` was supplied.
+</ResponseField>
+
+**Example response**
+
+```json
+{
+  "place_id": 7,
+  "name": "Parque El Virrey",
+  "description": "Urban park in Bogotá",
+  "address": "Calle 88, Bogotá",
+  "opening_hours": "Daily 6 am–8 pm",
+  "fees": "Free",
+  "coordinates": "4.6780,-74.0491",
+  "contact_phone": "+57 1 123 4567",
+  "contact_email": "info@parqueelvirrey.gov.co",
+  "social_media": "@parqueelvirrey",
+  "tipo_lugar": "Parque",
+  "ciudad": "Bogotá",
+  "es_favorito": 1,
+  "tipo_reaccion": "me gusta"
+}
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `404` | No place found with the given ID. |
+| `500` | Internal server error while retrieving the place detail. |

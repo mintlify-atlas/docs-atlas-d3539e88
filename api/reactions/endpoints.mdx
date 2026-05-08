@@ -1,0 +1,259 @@
+---
+title: "Reactions API endpoints reference"
+description: "Allow users to react to places with a reaction_type value. Includes endpoints to create, read, update, and delete reactions by ID or user-place pair."
+---
+
+The Reactions API lets users express a reaction to a place using a `reaction_type` string value. Each reaction links a single user to a single place. You can look up or remove a reaction using either its auto-generated `id` or the `user_id` + `place_id` combination, which is useful when you know the context but not the reaction's primary key.
+
+---
+
+## GET /api/Reactions
+
+Returns all reactions in the system.
+
+### Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the reaction.
+</ResponseField>
+
+<ResponseField name="user_id" type="integer">
+  ID of the user who reacted.
+</ResponseField>
+
+<ResponseField name="name_user" type="string">
+  Display name of the user.
+</ResponseField>
+
+<ResponseField name="place_id" type="integer">
+  ID of the place that was reacted to.
+</ResponseField>
+
+<ResponseField name="name_place" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="reaction_type" type="string">
+  The type of reaction (e.g., `"like"`, `"love"`).
+</ResponseField>
+
+<ResponseField name="reaction_date" type="string (datetime)">
+  ISO 8601 timestamp of when the reaction was recorded.
+</ResponseField>
+
+```bash
+curl -X GET https://your-api-host/api/Reactions
+```
+
+---
+
+## GET /api/Reactions/{id}
+
+Returns a single reaction by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The unique ID of the reaction to retrieve.
+</ParamField>
+
+### Response
+
+Returns a single `Reactions` object. See field descriptions under [GET /api/Reactions](#get-apireactions).
+
+```bash
+curl -X GET https://your-api-host/api/Reactions/15
+```
+
+### Error codes
+
+| Code | Description                             |
+|------|-----------------------------------------|
+| 404  | No reaction found with the given `id`.  |
+| 500  | Internal server error.                  |
+
+---
+
+## GET /api/Reactions/user/{userId}/place/{placeId}
+
+Returns the reaction a specific user recorded for a specific place. Use this endpoint to check whether the current user has already reacted to a place before showing a react button.
+
+### Path parameters
+
+<ParamField path="userId" type="integer" required>
+  The ID of the user.
+</ParamField>
+
+<ParamField path="placeId" type="integer" required>
+  The ID of the place.
+</ParamField>
+
+### Response
+
+Returns a single `Reactions` object. See field descriptions under [GET /api/Reactions](#get-apireactions).
+
+```bash
+curl -X GET https://your-api-host/api/Reactions/user/3/place/7
+```
+
+### Error codes
+
+| Code | Description                                                   |
+|------|---------------------------------------------------------------|
+| 404  | No reaction found for the given `userId` and `placeId`.       |
+| 500  | Internal server error.                                        |
+
+<Tip>
+  Use this endpoint to avoid duplicate-reaction UI states: if you get a `404`, the user has not yet reacted to that place.
+</Tip>
+
+---
+
+## POST /api/Reactions
+
+Records a new reaction from a user on a place.
+
+### Request body
+
+<ParamField body="user_id" type="integer" required>
+  ID of the user posting the reaction.
+</ParamField>
+
+<ParamField body="place_id" type="integer" required>
+  ID of the place being reacted to.
+</ParamField>
+
+<ParamField body="reaction_type" type="string" required>
+  The reaction value (e.g., `"like"`, `"love"`).
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a JSON success message:
+
+```json
+{
+  "mensaje": "Reacción registrada correctamente."
+}
+```
+
+```bash
+curl -X POST https://your-api-host/api/Reactions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 3,
+    "place_id": 7,
+    "reaction_type": "like"
+  }'
+```
+
+### Error codes
+
+| Code | Description            |
+|------|------------------------|
+| 500  | Internal server error. |
+
+---
+
+## PUT /api/Reactions/{id}
+
+Updates the `reaction_type` of an existing reaction.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the reaction to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="reaction_type" type="string" required>
+  The new reaction value.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a JSON success message:
+
+```json
+{
+  "mensaje": "Reacción actualizada correctamente."
+}
+```
+
+```bash
+curl -X PUT https://your-api-host/api/Reactions/15 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reaction_type": "love"
+  }'
+```
+
+### Error codes
+
+| Code | Description            |
+|------|------------------------|
+| 500  | Internal server error. |
+
+---
+
+## DELETE /api/Reactions/{id}
+
+Deletes a reaction by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the reaction to delete.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a JSON success message:
+
+```json
+{
+  "mensaje": "Reacción eliminada correctamente."
+}
+```
+
+```bash
+curl -X DELETE https://your-api-host/api/Reactions/15
+```
+
+### Error codes
+
+| Code | Description            |
+|------|------------------------|
+| 500  | Internal server error. |
+
+---
+
+## DELETE /api/Reactions/usuario/{idUsuario}/lugar/{idLugar}
+
+Deletes a reaction identified by the user and place combination. Use this when you know the user and place context but not the reaction's primary key.
+
+### Path parameters
+
+<ParamField path="idUsuario" type="integer" required>
+  The ID of the user whose reaction you want to delete.
+</ParamField>
+
+<ParamField path="idLugar" type="integer" required>
+  The ID of the place the reaction was recorded on.
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on successful deletion.
+
+```bash
+curl -X DELETE https://your-api-host/api/Reactions/usuario/3/lugar/7
+```
+
+### Error codes
+
+| Code | Description                                                          |
+|------|----------------------------------------------------------------------|
+| 400  | Database error — could not delete the reaction (e.g., constraint).   |
+| 500  | Internal server error.                                               |

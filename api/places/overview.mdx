@@ -1,0 +1,45 @@
+---
+title: "Places API: manage locations and points of interest"
+description: "Manage physical locations and points of interest with rich metadata, status control, and user interaction context through the Places API."
+---
+
+The Places API lets you create, retrieve, update, and delete physical locations or points of interest stored in SolSQL. Each place carries metadata like contact details, opening hours, fees, and coordinates, making it suitable for map-based applications, directories, and travel guides.
+
+## Available endpoints
+
+<CardGroup cols={2}>
+  <Card title="GET /api/Places" icon="list">
+    Retrieve all places.
+  </Card>
+  <Card title="GET /api/Places/\{id\}" icon="magnifying-glass">
+    Get a single place by its numeric ID.
+  </Card>
+  <Card title="GET /api/Places/\{id\}/detalle" icon="circle-info">
+    Get full place detail with optional user interaction context (favorites, reactions).
+  </Card>
+  <Card title="GET /api/Places/info_rapida" icon="bolt">
+    Get a lightweight summary of all places — ideal for listings and map views.
+  </Card>
+  <Card title="GET /api/Places/buscar" icon="search">
+    Search places by a keyword term using `?busqueda={term}`.
+  </Card>
+  <Card title="POST /api/Places" icon="plus">
+    Create a new place.
+  </Card>
+  <Card title="PUT /api/Places/\{id\}" icon="pen">
+    Update an existing place by ID.
+  </Card>
+  <Card title="PUT /api/Places/activate/\{id\}" icon="toggle-on">
+    Activate a place (sets `status` to active).
+  </Card>
+  <Card title="PUT /api/Places/deactivate/\{id\}" icon="toggle-off">
+    Deactivate a place (sets `status` to inactive).
+  </Card>
+  <Card title="DELETE /api/Places/\{id\}" icon="trash">
+    Permanently delete a place by ID.
+  </Card>
+</CardGroup>
+
+<Note>
+  Each place has a `status` field that controls its visibility. A value of `1` means active; `0` means inactive. Rather than setting this field manually through the update endpoint, use the dedicated **activate** (`PUT /api/Places/activate/{id}`) and **deactivate** (`PUT /api/Places/deactivate/{id}`) endpoints to toggle a place's status safely.
+</Note>

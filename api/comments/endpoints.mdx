@@ -1,0 +1,264 @@
+---
+title: "Comments API endpoints reference"
+description: "Create, retrieve, update, and delete user comments on places. Supports threaded replies via parent_comment_id and per-place comment listing."
+---
+
+The Comments API lets you create, read, update, and delete user comments attached to places. Each comment belongs to a place (`place_id`) and a user (`id`). You can build threaded discussions by setting `parent_comment_id` to the ID of an existing comment; leave it `null` for a top-level comment.
+
+---
+
+## GET /api/Comments
+
+Returns all comments in the system.
+
+### Response
+
+<ResponseField name="comment_id" type="integer">
+  Unique identifier for the comment.
+</ResponseField>
+
+<ResponseField name="place_id" type="integer">
+  ID of the place the comment belongs to.
+</ResponseField>
+
+<ResponseField name="name_place" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="id" type="integer">
+  ID of the user who posted the comment.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the user.
+</ResponseField>
+
+<ResponseField name="comment" type="string">
+  The comment text.
+</ResponseField>
+
+<ResponseField name="parent_comment_id" type="integer | null">
+  ID of the parent comment if this is a reply; `null` for top-level comments.
+</ResponseField>
+
+<ResponseField name="comment_date" type="string (datetime)">
+  ISO 8601 timestamp of when the comment was posted.
+</ResponseField>
+
+```bash
+curl -X GET https://your-api-host/api/Comments
+```
+
+---
+
+## GET /api/Comments/{id}
+
+Returns a single comment by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The unique ID of the comment to retrieve.
+</ParamField>
+
+### Response
+
+Returns a single `Comments` object. See field descriptions under [GET /api/Comments](#get-apicomments).
+
+```bash
+curl -X GET https://your-api-host/api/Comments/42
+```
+
+### Error codes
+
+| Code | Description                           |
+|------|---------------------------------------|
+| 404  | No comment found with the given `id`. |
+| 500  | Internal server error.                |
+
+---
+
+## GET /api/Comments/byLugar/{place_id}
+
+Returns all comments for a specific place. The response uses the `CommentsPlace` view, which includes the commenter's name alongside comment content. This is the recommended endpoint for displaying a comment thread on a place detail page.
+
+### Path parameters
+
+<ParamField path="place_id" type="integer" required>
+  The ID of the place whose comments you want to retrieve.
+</ParamField>
+
+### Response
+
+<ResponseField name="comment_id" type="integer">
+  Unique identifier for the comment.
+</ResponseField>
+
+<ResponseField name="parent_comment_id" type="integer | null">
+  ID of the parent comment for replies; `null` for top-level comments.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the user who posted the comment.
+</ResponseField>
+
+<ResponseField name="comment" type="string">
+  The comment text.
+</ResponseField>
+
+<ResponseField name="comment_date" type="string (datetime)">
+  ISO 8601 timestamp of when the comment was posted.
+</ResponseField>
+
+```bash
+curl -X GET https://your-api-host/api/Comments/byLugar/7
+```
+
+### Error codes
+
+| Code | Description                                       |
+|------|---------------------------------------------------|
+| 404  | No comments found for the given `place_id`.       |
+| 500  | Internal server error.                            |
+
+---
+
+## POST /api/Comments
+
+Creates a new comment on a place. Set `parent_comment_id` to the ID of an existing comment to post a reply; omit it or pass `null` for a top-level comment.
+
+### Request body
+
+<ParamField body="place_id" type="integer" required>
+  ID of the place to comment on.
+</ParamField>
+
+<ParamField body="id" type="integer" required>
+  ID of the user posting the comment.
+</ParamField>
+
+<ParamField body="comment" type="string" required>
+  The comment text.
+</ParamField>
+
+<ParamField body="parent_comment_id" type="integer">
+  ID of the comment this reply is responding to. Omit or set to `null` for a top-level comment.
+</ParamField>
+
+<ParamField body="comment_date" type="string (datetime)" required>
+  ISO 8601 timestamp representing when the comment was made.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a plain-text success message on success.
+
+**Top-level comment**
+
+```bash
+curl -X POST https://your-api-host/api/Comments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "place_id": 7,
+    "id": 3,
+    "comment": "Great spot for a weekend hike!",
+    "parent_comment_id": null,
+    "comment_date": "2026-05-08T10:30:00Z"
+  }'
+```
+
+**Reply to an existing comment**
+
+```bash
+curl -X POST https://your-api-host/api/Comments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "place_id": 7,
+    "id": 5,
+    "comment": "Totally agree, the view from the top is stunning.",
+    "parent_comment_id": 42,
+    "comment_date": "2026-05-08T11:00:00Z"
+  }'
+```
+
+### Error codes
+
+| Code | Description            |
+|------|------------------------|
+| 500  | Internal server error. |
+
+<Note>
+  The `comment_date` field should be provided by the client and typically reflects the time the user submitted the form.
+</Note>
+
+---
+
+## PUT /api/Comments/{id}
+
+Updates the text of an existing comment. Only the `comment` field can be changed.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the comment to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="comment" type="string" required>
+  The updated comment text.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a success message on update.
+
+```bash
+curl -X PUT https://your-api-host/api/Comments/42 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "comment": "Updated: the trail is now closed on Mondays."
+  }'
+```
+
+### Error codes
+
+| Code | Description                           |
+|------|---------------------------------------|
+| 404  | No comment found with the given `id`. |
+| 500  | Internal server error.                |
+
+<Warning>
+  Only the `comment` text is updatable. `place_id`, `id` (user), and `comment_date` are not modified by this endpoint.
+</Warning>
+
+---
+
+## DELETE /api/Comments/{id}
+
+Deletes a comment by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the comment to delete.
+</ParamField>
+
+### Response
+
+Returns `200 OK` with a success message on deletion.
+
+```bash
+curl -X DELETE https://your-api-host/api/Comments/42
+```
+
+### Error codes
+
+| Code | Description                           |
+|------|---------------------------------------|
+| 404  | No comment found with the given `id`. |
+| 500  | Internal server error.                |
+
+<Warning>
+  Deleting a parent comment does not automatically delete its replies. Handle orphaned replies in your application logic as needed.
+</Warning>

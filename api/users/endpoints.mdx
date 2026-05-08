@@ -1,0 +1,427 @@
+---
+title: "Users API endpoints reference"
+description: "Complete reference for all six Users API endpoints including path parameters, request body fields, response schemas, curl examples, and error codes."
+---
+
+This page documents every endpoint exposed by the Users API. Each section covers the method, path, required parameters, expected responses, and a curl example you can run against your own host.
+
+---
+
+## GET /api/vw\_user
+
+Returns all user accounts in the database.
+
+### Response
+
+`200 OK` — an array of user objects.
+
+<ResponseField name="[]" type="array">
+  <Expandable title="User object properties">
+    <ResponseField name="Id" type="integer">
+      Unique identifier of the user.
+    </ResponseField>
+    <ResponseField name="Name" type="string">
+      Full name of the user.
+    </ResponseField>
+    <ResponseField name="Email" type="string">
+      Email address of the user.
+    </ResponseField>
+    <ResponseField name="Password" type="string">
+      BCrypt hash of the user's password.
+    </ResponseField>
+    <ResponseField name="Role" type="integer">
+      `1` = regular user, `2` = administrator.
+    </ResponseField>
+    <ResponseField name="Status" type="integer">
+      `1` = active, `0` = inactive.
+    </ResponseField>
+    <ResponseField name="Created_at" type="string">
+      UTC timestamp of account creation (ISO 8601).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+```bash cURL
+curl --request GET \
+  --url https://your-api-host/api/vw_user
+```
+
+```json 200 OK
+[
+  {
+    "Id": 1,
+    "Name": "Maria Garcia",
+    "Email": "maria@example.com",
+    "Password": "$2a$11$exampleHashValue...",
+    "Role": 1,
+    "Status": 1,
+    "Created_at": "2024-03-15T10:30:00Z"
+  },
+  {
+    "Id": 2,
+    "Name": "Carlos Lopez",
+    "Email": "carlos@example.com",
+    "Password": "$2a$11$anotherHashValue...",
+    "Role": 2,
+    "Status": 1,
+    "Created_at": "2024-04-01T08:00:00Z"
+  }
+]
+```
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `500 Internal Server Error` | Database or unexpected server error. |
+
+---
+
+## GET /api/vw\_user/\{id\}
+
+Returns a single user by their numeric ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the user to retrieve.
+</ParamField>
+
+### Response
+
+`200 OK` — an array containing the matching user object.
+
+`404 Not Found` — no user exists with the given ID.
+
+<ResponseField name="[]" type="array">
+  <Expandable title="User object properties">
+    <ResponseField name="Id" type="integer">
+      Unique identifier of the user.
+    </ResponseField>
+    <ResponseField name="Name" type="string">
+      Full name of the user.
+    </ResponseField>
+    <ResponseField name="Email" type="string">
+      Email address of the user.
+    </ResponseField>
+    <ResponseField name="Password" type="string">
+      BCrypt hash of the user's password.
+    </ResponseField>
+    <ResponseField name="Role" type="integer">
+      `1` = regular user, `2` = administrator.
+    </ResponseField>
+    <ResponseField name="Status" type="integer">
+      `1` = active, `0` = inactive.
+    </ResponseField>
+    <ResponseField name="Created_at" type="string">
+      UTC timestamp of account creation (ISO 8601).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+```bash cURL
+curl --request GET \
+  --url https://your-api-host/api/vw_user/1
+```
+
+```json 200 OK
+[
+  {
+    "Id": 1,
+    "Name": "Maria Garcia",
+    "Email": "maria@example.com",
+    "Password": "$2a$11$exampleHashValue...",
+    "Role": 1,
+    "Status": 1,
+    "Created_at": "2024-03-15T10:30:00Z"
+  }
+]
+```
+
+```json 404 Not Found
+{
+  "message": "ERROR: User not found"
+}
+```
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `404 Not Found` | No user with the given ID exists. |
+| `500 Internal Server Error` | Database or unexpected server error. |
+
+---
+
+## GET /api/vw\_user/status/\{status\}
+
+Returns all users filtered by their account status.
+
+### Path parameters
+
+<ParamField path="status" type="integer" required>
+  Account status to filter by. Accepted values:
+  - `1` — active users
+  - `0` — inactive users
+</ParamField>
+
+### Response
+
+`200 OK` — an array of user objects matching the requested status.
+
+`400 Bad Request` — the status value is not `0` or `1`.
+
+<ResponseField name="[]" type="array">
+  <Expandable title="User object properties">
+    <ResponseField name="Id" type="integer">
+      Unique identifier of the user.
+    </ResponseField>
+    <ResponseField name="Name" type="string">
+      Full name of the user.
+    </ResponseField>
+    <ResponseField name="Email" type="string">
+      Email address of the user.
+    </ResponseField>
+    <ResponseField name="Password" type="string">
+      BCrypt hash of the user's password.
+    </ResponseField>
+    <ResponseField name="Role" type="integer">
+      `1` = regular user, `2` = administrator.
+    </ResponseField>
+    <ResponseField name="Status" type="integer">
+      `1` = active, `0` = inactive.
+    </ResponseField>
+    <ResponseField name="Created_at" type="string">
+      UTC timestamp of account creation (ISO 8601).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+```bash cURL
+curl --request GET \
+  --url https://your-api-host/api/vw_user/status/1
+```
+
+```json 200 OK — active users
+[
+  {
+    "Id": 1,
+    "Name": "Maria Garcia",
+    "Email": "maria@example.com",
+    "Password": "$2a$11$exampleHashValue...",
+    "Role": 1,
+    "Status": 1,
+    "Created_at": "2024-03-15T10:30:00Z"
+  }
+]
+```
+
+```json 400 Bad Request
+{
+  "message": "ERROR: The State must be active (1) or inactive (0)"
+}
+```
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | `status` is not `0` or `1`. |
+| `500 Internal Server Error` | Database or unexpected server error. |
+
+---
+
+## POST /api/vw\_user
+
+Creates a new user account. The password you provide is automatically BCrypt-hashed before it is stored.
+
+### Request body
+
+<ParamField body="Name" type="string" required>
+  Full name of the new user.
+</ParamField>
+
+<ParamField body="Email" type="string" required>
+  Email address of the new user. Used for login.
+</ParamField>
+
+<ParamField body="Password" type="string" required>
+  Plain-text password. The API hashes it with BCrypt before persisting — never send a pre-hashed value to this endpoint.
+</ParamField>
+
+<ParamField body="Role" type="integer" required>
+  User role: `1` for regular users, `2` for administrators.
+</ParamField>
+
+### Response
+
+`200 OK` — the user was created successfully.
+
+<ResponseField name="message" type="string">
+  Confirmation message: `"User inserted successfully."`
+</ResponseField>
+
+### Example
+
+```bash cURL
+curl --request POST \
+  --url https://your-api-host/api/vw_user \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "Name": "Ana Torres",
+    "Email": "ana@example.com",
+    "Password": "myplainpassword",
+    "Role": 1
+  }'
+```
+
+<CodeGroup>
+
+```json Request body
+{
+  "Name": "Ana Torres",
+  "Email": "ana@example.com",
+  "Password": "myplainpassword",
+  "Role": 1
+}
+```
+
+```json 200 OK
+{
+  "message": "User inserted successfully."
+}
+```
+
+</CodeGroup>
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `500 Internal Server Error` | Database constraint violation or unexpected server error. |
+
+---
+
+## PUT /api/vw\_user/\{id\}
+
+Updates an existing user by ID. You can modify any combination of fields including the account's `Status`.
+
+<Note>
+  If the `Password` value you send already starts with `$2a$`, the API assumes it is an existing BCrypt hash and stores it without re-hashing. If it does not start with `$2a$`, the API treats it as a new plain-text password and hashes it before saving.
+</Note>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the user to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="Name" type="string" required>
+  Updated full name of the user.
+</ParamField>
+
+<ParamField body="Email" type="string" required>
+  Updated email address of the user.
+</ParamField>
+
+<ParamField body="Password" type="string" required>
+  New password (plain text) or existing BCrypt hash. Values starting with `$2a$` are stored as-is.
+</ParamField>
+
+<ParamField body="Role" type="integer" required>
+  Updated role: `1` for regular users, `2` for administrators.
+</ParamField>
+
+<ParamField body="Status" type="integer" required>
+  Updated account status: `1` = active, `0` = inactive.
+</ParamField>
+
+### Response
+
+`200 OK` — the user was updated successfully.
+
+<ResponseField name="message" type="string">
+  Confirmation message: `"User updated successfully."`
+</ResponseField>
+
+### Example
+
+```bash cURL
+curl --request PUT \
+  --url https://your-api-host/api/vw_user/1 \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "Name": "Maria Garcia",
+    "Email": "maria.new@example.com",
+    "Password": "newplainpassword",
+    "Role": 1,
+    "Status": 1
+  }'
+```
+
+<CodeGroup>
+
+```json Request body
+{
+  "Name": "Maria Garcia",
+  "Email": "maria.new@example.com",
+  "Password": "newplainpassword",
+  "Role": 1,
+  "Status": 1
+}
+```
+
+```json 200 OK
+{
+  "message": "User updated successfully."
+}
+```
+
+</CodeGroup>
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `500 Internal Server Error` | Database or unexpected server error. |
+
+---
+
+## DELETE /api/vw\_user/\{id\}
+
+Deletes a user by ID.
+
+<Warning>
+  This action is permanent. Deleted users cannot be recovered through the API.
+</Warning>
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the user to delete.
+</ParamField>
+
+### Response
+
+`200 OK` — the user was deleted successfully.
+
+### Example
+
+```bash cURL
+curl --request DELETE \
+  --url https://your-api-host/api/vw_user/1
+```
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `500 Internal Server Error` | Database or unexpected server error. |

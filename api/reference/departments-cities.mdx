@@ -1,0 +1,314 @@
+---
+title: "Departments and Cities API reference"
+description: "Manage the two-level geographic hierarchy of departments and cities used to classify places in SolSQL. Cities must belong to an existing department."
+---
+
+Departments and cities form the two-level geographic hierarchy that the SolSQL API uses to classify places. Each city belongs to exactly one department via its `Department_id` field, so you must create a department before you can create a city inside it.
+
+---
+
+## Departments
+
+### GET /api/Departments
+
+Returns all departments in the system.
+
+```bash
+curl -X GET https://your-api-host/api/Departments
+```
+
+**Response — 200 OK**
+
+```json
+[
+  { "id": 1, "Name": "Antioquia" },
+  { "id": 2, "Name": "Cundinamarca" }
+]
+```
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the department (`department_id` column).
+</ResponseField>
+
+<ResponseField name="Name" type="string">
+  Display name of the department.
+</ResponseField>
+
+---
+
+### GET /api/Departments/{id}
+
+Returns a single department by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The department ID to look up.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/Departments/1
+```
+
+**Response — 200 OK**
+
+```json
+[{ "id": 1, "Name": "Antioquia" }]
+```
+
+**Response — 500 Internal Server Error**
+
+```json
+{ "error": "<database error message>" }
+```
+
+---
+
+### POST /api/Departments
+
+Creates a new department.
+
+#### Request body
+
+<ParamField body="Name" type="string" required>
+  The name of the new department.
+</ParamField>
+
+```bash
+curl -X POST https://your-api-host/api/Departments \
+  -H "Content-Type: application/json" \
+  -d '{ "Name": "Valle del Cauca" }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully inserted registration." }
+```
+
+---
+
+### PUT /api/Departments/{id}
+
+Updates an existing department.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the department to update.
+</ParamField>
+
+#### Request body
+
+<ParamField body="Name" type="string" required>
+  The new name for the department.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Departments/1 \
+  -H "Content-Type: application/json" \
+  -d '{ "Name": "Antioquia Updated" }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully updated registration." }
+```
+
+---
+
+### DELETE /api/Departments/{id}
+
+Deletes a department by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the department to delete.
+</ParamField>
+
+```bash
+curl -X DELETE https://your-api-host/api/Departments/1
+```
+
+**Response — 200 OK**
+
+Returns the number of rows affected.
+
+---
+
+## Cities
+
+<Note>
+  `GET /api/Cities/{id}` filters cities **by department ID**, not by city ID. It returns all cities that belong to the specified department.
+</Note>
+
+### GET /api/Cities
+
+Returns all cities across all departments.
+
+```bash
+curl -X GET https://your-api-host/api/Cities
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "Id": 1,
+    "Name_city": "Medellín",
+    "Department_id": 1,
+    "Name_department": "Antioquia"
+  },
+  {
+    "Id": 2,
+    "Name_city": "Bogotá",
+    "Department_id": 2,
+    "Name_department": "Cundinamarca"
+  }
+]
+```
+
+<ResponseField name="Id" type="integer">
+  Unique identifier for the city (`city_id` column).
+</ResponseField>
+
+<ResponseField name="Name_city" type="string">
+  Display name of the city.
+</ResponseField>
+
+<ResponseField name="Department_id" type="integer">
+  ID of the department this city belongs to.
+</ResponseField>
+
+<ResponseField name="Name_department" type="string">
+  Display name of the parent department, joined from the departments table.
+</ResponseField>
+
+---
+
+### GET /api/Cities/{id}
+
+Returns all cities that belong to a given department.
+
+<Tip>
+  Pass a department ID here, not a city ID. To look up a specific city, use `GET /api/Cities` and filter client-side, or query by department first.
+</Tip>
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The department ID whose cities you want to retrieve.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/Cities/1
+```
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "Id": 1,
+    "Name_city": "Medellín",
+    "Department_id": 1,
+    "Name_department": "Antioquia"
+  }
+]
+```
+
+---
+
+### POST /api/Cities
+
+Creates a new city inside an existing department.
+
+#### Request body
+
+<ParamField body="Name_city" type="string" required>
+  The name of the new city.
+</ParamField>
+
+<ParamField body="Department_id" type="integer" required>
+  The ID of the department this city belongs to. The department must already exist.
+</ParamField>
+
+```bash
+curl -X POST https://your-api-host/api/Cities \
+  -H "Content-Type: application/json" \
+  -d '{ "Name_city": "Envigado", "Department_id": 1 }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully inserted registration." }
+```
+
+---
+
+### PUT /api/Cities/{id}
+
+Updates an existing city.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the city to update.
+</ParamField>
+
+#### Request body
+
+<ParamField body="Name_city" type="string" required>
+  The new name for the city.
+</ParamField>
+
+<ParamField body="Department_id" type="integer" required>
+  The department ID the city should belong to after the update.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Cities/1 \
+  -H "Content-Type: application/json" \
+  -d '{ "Name_city": "Medellín", "Department_id": 1 }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully updated registration." }
+```
+
+---
+
+### DELETE /api/Cities/{id}
+
+Deletes a city by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the city to delete.
+</ParamField>
+
+```bash
+curl -X DELETE https://your-api-host/api/Cities/1
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Successfully deleted registration." }
+```
+
+---
+
+## Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Request succeeded. |
+| 500 | A database or server error occurred. The response body contains an `error` or `message` field with details. |

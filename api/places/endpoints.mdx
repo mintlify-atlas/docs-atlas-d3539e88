@@ -1,0 +1,366 @@
+---
+title: "Places CRUD endpoints reference"
+description: "Full reference for creating, reading, updating, and deleting place records, including request parameters, response schemas, and curl examples."
+---
+
+Use these endpoints to manage the full lifecycle of a place record — from initial creation through updates and eventual deletion. All endpoints are prefixed with `/api/Places`.
+
+---
+
+## GET /api/Places
+
+Returns an array of all place records.
+
+```bash
+curl -X GET https://your-api-host/api/Places
+```
+
+### Response
+
+<ResponseField name="place_id" type="integer">
+  Unique identifier for the place.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the place.
+</ResponseField>
+
+<ResponseField name="type_id" type="integer">
+  Numeric ID of the place type.
+</ResponseField>
+
+<ResponseField name="name_type" type="string">
+  Human-readable label for the place type (read-only, resolved by the database).
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Optional text description of the place.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  Street or postal address.
+</ResponseField>
+
+<ResponseField name="city_id" type="integer">
+  Numeric ID of the city.
+</ResponseField>
+
+<ResponseField name="name_city" type="string">
+  Human-readable city name (read-only, resolved by the database).
+</ResponseField>
+
+<ResponseField name="opening_hours" type="string">
+  Opening hours as a free-form string (e.g. `"Mon–Fri 9 am–6 pm"`).
+</ResponseField>
+
+<ResponseField name="fees" type="string">
+  Admission or usage fees as a free-form string.
+</ResponseField>
+
+<ResponseField name="coordinates" type="string">
+  Geographic coordinates (e.g. `"4.7110,-74.0721"`).
+</ResponseField>
+
+<ResponseField name="contact_phone" type="string">
+  Contact phone number.
+</ResponseField>
+
+<ResponseField name="contact_email" type="string">
+  Contact email address.
+</ResponseField>
+
+<ResponseField name="social_media" type="string">
+  Social media handle or URL.
+</ResponseField>
+
+<ResponseField name="status" type="integer">
+  Active state of the place. `1` = active, `0` = inactive.
+</ResponseField>
+
+<ResponseField name="creation_date" type="string (ISO 8601)">
+  Timestamp when the place was created.
+</ResponseField>
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Internal server error while retrieving places. |
+
+---
+
+## GET /api/Places/\{id\}
+
+Returns a single place record by its ID.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place to retrieve.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/Places/7
+```
+
+### Response
+
+Returns a single `Places` object with the same fields listed under [GET /api/Places](#get-apiplaces).
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `404` | No place found with the given ID. |
+| `500` | Internal server error while retrieving the place. |
+
+---
+
+## POST /api/Places
+
+Creates a new place record.
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  Display name of the place.
+</ParamField>
+
+<ParamField body="type_id" type="integer">
+  Numeric ID of the place type.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional text description of the place.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Street or postal address.
+</ParamField>
+
+<ParamField body="city_id" type="integer">
+  Numeric ID of the city where the place is located.
+</ParamField>
+
+<ParamField body="opening_hours" type="string">
+  Opening hours as a free-form string.
+</ParamField>
+
+<ParamField body="fees" type="string">
+  Admission or usage fees as a free-form string.
+</ParamField>
+
+<ParamField body="coordinates" type="string">
+  Geographic coordinates, e.g. `"4.7110,-74.0721"`.
+</ParamField>
+
+<ParamField body="contact_phone" type="string">
+  Contact phone number.
+</ParamField>
+
+<ParamField body="contact_email" type="string">
+  Contact email address.
+</ParamField>
+
+<ParamField body="social_media" type="string">
+  Social media handle or URL.
+</ParamField>
+
+```bash
+curl -X POST https://your-api-host/api/Places \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Parque El Virrey",
+    "type_id": 3,
+    "description": "Urban park in Bogotá",
+    "address": "Calle 88, Bogotá",
+    "city_id": 1,
+    "opening_hours": "Daily 6 am–8 pm",
+    "fees": "Free",
+    "coordinates": "4.6780,-74.0491",
+    "contact_phone": "+57 1 123 4567",
+    "contact_email": "info@parqueelvirrey.gov.co",
+    "social_media": "@parqueelvirrey"
+  }'
+```
+
+### Response
+
+```json
+"Lugar insertado exitosamente."
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Internal server error while inserting the place. |
+
+---
+
+## PUT /api/Places/\{id\}
+
+Updates an existing place record. You must supply all editable fields; omitted optional fields are set to `null`.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  Display name of the place.
+</ParamField>
+
+<ParamField body="type_id" type="integer">
+  Numeric ID of the place type.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Text description of the place.
+</ParamField>
+
+<ParamField body="address" type="string">
+  Street or postal address.
+</ParamField>
+
+<ParamField body="city_id" type="integer">
+  Numeric ID of the city.
+</ParamField>
+
+<ParamField body="opening_hours" type="string">
+  Opening hours as a free-form string.
+</ParamField>
+
+<ParamField body="fees" type="string">
+  Admission or usage fees.
+</ParamField>
+
+<ParamField body="coordinates" type="string">
+  Geographic coordinates.
+</ParamField>
+
+<ParamField body="contact_phone" type="string">
+  Contact phone number.
+</ParamField>
+
+<ParamField body="contact_email" type="string">
+  Contact email address.
+</ParamField>
+
+<ParamField body="social_media" type="string">
+  Social media handle or URL.
+</ParamField>
+
+<ParamField body="status" type="integer">
+  Active state. `1` = active, `0` = inactive. Prefer the dedicated activate/deactivate endpoints for toggling status.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Places/7 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Parque El Virrey (Renovado)",
+    "type_id": 3,
+    "city_id": 1,
+    "status": 1
+  }'
+```
+
+### Response
+
+```json
+"Lugar con ID 7 actualizado exitosamente."
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Database or server error while updating the place. |
+
+---
+
+## PUT /api/Places/activate/\{id\}
+
+Sets the `status` of a place to active.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place to activate.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Places/activate/7
+```
+
+### Response
+
+```json
+"Lugar con ID 7 activado correctamente."
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Internal server error while activating the place. |
+
+---
+
+## PUT /api/Places/deactivate/\{id\}
+
+Sets the `status` of a place to inactive.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place to deactivate.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/Places/deactivate/7
+```
+
+### Response
+
+```json
+"Lugar con ID 7 desactivado correctamente."
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Internal server error while deactivating the place. |
+
+---
+
+## DELETE /api/Places/\{id\}
+
+Permanently deletes a place record from the database.
+
+### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The numeric ID of the place to delete.
+</ParamField>
+
+```bash
+curl -X DELETE https://your-api-host/api/Places/7
+```
+
+### Response
+
+```json
+"Lugar con ID 7 eliminado exitosamente."
+```
+
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| `500` | Database or server error while deleting the place. |

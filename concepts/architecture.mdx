@@ -1,0 +1,108 @@
+---
+title: "SolSQL API architecture overview"
+description: "Understand how SolSQL API is structured: ASP.NET Core 8, MySQL stored procedures, CORS policy, response caching, Swagger, and Docker deployment."
+---
+
+SolSQL API is a RESTful service built on ASP.NET Core 8 with a MySQL backend. Every database operation runs through MySQL stored procedures — controllers never issue raw EF queries directly against tables. This design centralizes business logic in the database layer and keeps controller code thin.
+
+## Technology stack
+
+| Component | Technology |
+|-----------|-----------|
+| Runtime | ASP.NET Core 8 (.NET 8) |
+| Database | MySQL (Pomelo EF Core provider) |
+| ORM | Entity Framework Core 8 (`FromSqlInterpolated`) |
+| Password hashing | BCrypt.Net |
+| API docs | Swagger / OpenAPI (Swashbuckle) |
+| Containerization | Docker |
+
+## Key services configured in Program.cs
+
+The following services are registered in `Program.cs` before `builder.Build()` is called:
+
+| Service | Registration method | Purpose |
+|---------|---------------------|---------|
+| Controllers | `AddControllers()` | Registers all `[ApiController]` routes |
+| Swagger / OpenAPI | `AddEndpointsApiExplorer()` + `AddSwaggerGen()` | Generates the interactive API explorer |
+| MySQL / EF Core | `AddDbContext<ContextDB>()` | Provides the `ContextDB` dependency to every controller |
+| CORS | `AddCors()` with `"AllowAll"` policy | Permits cross-origin requests from any client |
+| Response caching | `AddResponseCaching()` | Enables HTTP response cache headers |
+
+## Stored procedure pattern
+
+Controllers call stored procedures through EF Core's `FromSqlInterpolated` method rather than querying `DbSet` properties with LINQ. For example, the login endpoint executes:
+
+```csharp
+var users = await _context.LoginRequests
+    .FromSqlInterpolated($"CALL sp_login({request.Email}, {request.Role})")
+    .ToListAsync();
+```
+
+This pattern applies across all controllers. Parameters are passed as interpolated variables, which EF Core converts to parameterized queries to prevent SQL injection.
+
+## CORS policy
+
+The `"AllowAll"` CORS policy is registered and applied globally:
+
+```csharp
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowAll",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
+```
+
+```csharp
+app.UseCors("AllowAll");
+```
+
+This permits requests from **any origin**, using **any HTTP method**, with **any request headers**. You can tighten this policy for production deployments by replacing `AllowAnyOrigin()` with a specific origins list.
+
+<Warning>
+The `AllowAnyOrigin()` setting is permissive by design for development. Before exposing the API publicly, restrict allowed origins to your known client domains.
+</Warning>
+
+## Response caching
+
+Response caching middleware is registered and enabled:
+
+```csharp
+builder.Services.AddResponseCaching();
+// ...
+app.UseResponseCaching();
+```
+
+Controllers can instruct the middleware to cache responses by adding `[ResponseCache]` attributes to actions. Caching reduces repeated database load for read-heavy endpoints.
+
+## Swagger UI
+
+Swagger is available at `/swagger` in all environments. The endpoint is configured as:
+
+```csharp
+app.UseSwagger();
+app.UseSwaggerUI(c => {
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+    c.RoutePrefix = "swagger";
+});
+```
+
+Visit `http://<host>/swagger` to browse all endpoints interactively and send test requests without a separate API client.
+
+<Note>
+HTTPS redirection (`UseHttpsRedirection`) is commented out in `Program.cs`. If you deploy behind a TLS-terminating proxy (such as nginx or a cloud load balancer), the proxy handles HTTPS and the API can remain on HTTP internally.
+</Note>
+
+## Docker deployment
+
+The project includes Docker support. You can build and run the API in a container, which bundles the .NET runtime and application together. Set the `Connection_mysql` connection string in your environment or Docker Compose configuration to point to your MySQL instance.
+
+```bash
+docker build -f api_solsql/Dockerfile -t solsql-api .
+docker run -p 8080:8080 \
+  -e ConnectionStrings__Connection_mysql="Server=db;Database=solsql;User=root;Password=secret;" \
+  solsql-api
+```
+
+The API starts on the configured port and connects to MySQL using the Pomelo provider with auto-detected server version.

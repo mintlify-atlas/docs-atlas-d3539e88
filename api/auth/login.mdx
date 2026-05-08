@@ -1,0 +1,121 @@
+---
+title: "POST /api/LoginRequest/login"
+description: "POST /api/LoginRequest/login authenticates by email, password, and role. Verifies BCrypt hash and returns the user object with Password set to null."
+---
+
+Authenticate a user against the database. The API looks up the account by email and role, verifies the plain-text password against the stored BCrypt hash, and returns the matching user record — minus the `Password` field — on success.
+
+<Note>
+  This API does not issue JWT tokens. The returned user object is your authentication record. Store it client-side as needed to track the current session.
+</Note>
+
+## Endpoint
+
+```
+POST /api/LoginRequest/login
+```
+
+## Request body
+
+<ParamField body="Email" type="string" required>
+  The user's email address. Used together with `Role` to look up the account.
+</ParamField>
+
+<ParamField body="Password" type="string" required>
+  The user's plain-text password. The API verifies this value against the BCrypt hash stored in the database.
+</ParamField>
+
+<ParamField body="Role" type="integer" required>
+  The user's role: `1` for regular users, `2` for administrators. The login call will fail if the role does not match the record in the database.
+</ParamField>
+
+## Response fields
+
+On success the API returns `200 OK` with a user object. The `Password` field is always `null` in the response.
+
+<ResponseField name="Id" type="integer">
+  Unique identifier of the authenticated user.
+</ResponseField>
+
+<ResponseField name="Name" type="string">
+  Full name of the authenticated user.
+</ResponseField>
+
+<ResponseField name="Email" type="string">
+  Email address of the authenticated user.
+</ResponseField>
+
+<ResponseField name="Password" type="string | null">
+  Always `null` in the response. The BCrypt hash is cleared before the object is returned.
+</ResponseField>
+
+<ResponseField name="Role" type="integer">
+  Role of the authenticated user: `1` for regular users, `2` for administrators.
+</ResponseField>
+
+<Note>
+  The login endpoint uses the `LoginRequest` model, which contains `Id`, `Name`, `Email`, `Password`, and `Role`. It does not include `Status` or `Created_at`. Use `GET /api/vw_user/{id}` if you need the full user profile after login.
+</Note>
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://your-api-host/api/LoginRequest/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "Email": "maria@example.com",
+    "Password": "supersecret123",
+    "Role": 1
+  }'
+```
+
+```json Request body
+{
+  "Email": "maria@example.com",
+  "Password": "supersecret123",
+  "Role": 1
+}
+```
+
+</CodeGroup>
+
+### Success response — 200 OK
+
+```json
+{
+  "Id": 42,
+  "Name": "Maria Garcia",
+  "Email": "maria@example.com",
+  "Password": null,
+  "Role": 1
+}
+```
+
+<Note>
+  `Password` is always `null` in the response — the API clears the hash before returning the object.
+</Note>
+
+## Error responses
+
+| Status | Message | Description |
+|--------|---------|-------------|
+| `401 Unauthorized` | `User not found` | No account matches the provided email and role. |
+| `401 Unauthorized` | `Invalid role` | An account was found but the stored role does not match the requested role. |
+| `401 Unauthorized` | `Invalid credentials` | The password did not pass BCrypt verification. |
+| `500 Internal Server Error` | `error` | A database or unexpected server error occurred. |
+
+```json 401 — Invalid credentials
+{
+  "message": "Invalid credentials"
+}
+```
+
+```json 500 — Server error
+{
+  "message": "Unexpected error",
+  "error": "Details about the exception"
+}
+```

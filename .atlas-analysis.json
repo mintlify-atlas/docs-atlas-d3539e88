@@ -1,0 +1,146 @@
+{
+  "projectType": "api-service",
+  "projectName": "SolSQL API",
+  "projectDescription": "A RESTful API built with ASP.NET Core 8 and MySQL that manages places, users, comments, reactions, and favorites for a location-discovery platform.",
+  "theme": "luma",
+  "primaryColor": "#2563EB",
+  "lightColor": "#DBEAFE",
+  "darkColor": "#1E3A8A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "deployment"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/architecture",
+              "concepts/authentication",
+              "concepts/data-model"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/login"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "api/users/overview",
+              "api/users/endpoints"
+            ]
+          },
+          {
+            "group": "Places",
+            "pages": [
+              "api/places/overview",
+              "api/places/endpoints",
+              "api/places/search"
+            ]
+          },
+          {
+            "group": "Interactions",
+            "pages": [
+              "api/comments/endpoints",
+              "api/reactions/endpoints",
+              "api/favorites/endpoints"
+            ]
+          },
+          {
+            "group": "Reference Data",
+            "pages": [
+              "api/reference/departments-cities",
+              "api/reference/place-types",
+              "api/reference/photos",
+              "api/reference/logs"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Full CRUD operations for places, users, comments, reactions, and favorites",
+    "MySQL stored procedures for all database operations",
+    "BCrypt password hashing for user authentication",
+    "Swagger/OpenAPI documentation built-in",
+    "CORS support with configurable policies",
+    "Response caching middleware",
+    "Docker containerization support",
+    "Location search with full-text and detail views",
+    "User role-based access (admin/user roles)",
+    "Geographic organization by departments and cities"
+  ],
+  "publicApiSurface": [
+    "POST /api/LoginRequest/login",
+    "GET /api/vw_user",
+    "POST /api/vw_user",
+    "PUT /api/vw_user/{id}",
+    "DELETE /api/vw_user/{id}",
+    "GET /api/Places",
+    "GET /api/Places/{id}",
+    "GET /api/Places/{id}/detalle",
+    "GET /api/Places/info_rapida",
+    "GET /api/Places/buscar",
+    "POST /api/Places",
+    "PUT /api/Places/{id}",
+    "PUT /api/Places/activate/{id}",
+    "PUT /api/Places/deactivate/{id}",
+    "DELETE /api/Places/{id}",
+    "GET /api/Comments",
+    "GET /api/Comments/{id}",
+    "GET /api/Comments/byLugar/{place_id}",
+    "POST /api/Comments",
+    "PUT /api/Comments/{id}",
+    "DELETE /api/Comments/{id}",
+    "GET /api/Reactions",
+    "GET /api/Reactions/{id}",
+    "GET /api/Reactions/user/{userId}/place/{placeId}",
+    "POST /api/Reactions",
+    "PUT /api/Reactions/{id}",
+    "DELETE /api/Reactions/{id}",
+    "DELETE /api/Reactions/usuario/{idUsuario}/lugar/{idLugar}",
+    "GET /api/Favorites",
+    "GET /api/Favorites/{id}",
+    "GET /api/Favorites/byUser/{user_id}",
+    "GET /api/Favorites/user/{userId}/place/{placeId}",
+    "POST /api/Favorites",
+    "DELETE /api/Favorites/{id}",
+    "DELETE /api/Favorites/usuario/{idUsuario}/lugar/{idLugar}",
+    "GET /api/Photos",
+    "GET /api/Photos/{id}",
+    "GET /api/Photos/place/{p_place_id}",
+    "POST /api/Photos",
+    "PUT /api/Photos/{id}",
+    "DELETE /api/Photos/{id}",
+    "GET /api/Departments",
+    "POST /api/Departments",
+    "PUT /api/Departments/{id}",
+    "DELETE /api/Departments/{id}",
+    "GET /api/Cities",
+    "GET /api/Cities/{id}",
+    "POST /api/Cities",
+    "PUT /api/Cities/{id}",
+    "DELETE /api/Cities/{id}",
+    "GET /api/PlaceTypes",
+    "GET /api/vw_logs",
+    "GET /api/vw_logs_register",
+    "GET /api/vw_totalcomments_date",
+    "GET /api/vw_totalcomments_users"
+  ]
+}

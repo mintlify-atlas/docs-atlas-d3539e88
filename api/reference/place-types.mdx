@@ -1,0 +1,162 @@
+---
+title: "Place Types API reference"
+description: "Create, read, update, and delete place type categories such as restaurant, park, or museum. Types have a name and optional description for classifying places."
+---
+
+Place types categorize every place registered in SolSQL. Examples include restaurant, park, museum, or hotel. Each place type has a human-readable name and an optional description. You assign a place type when you create or update a place.
+
+---
+
+## Endpoints
+
+### GET /api/PlaceTypes
+
+Returns all place types in the system.
+
+```bash
+curl -X GET https://your-api-host/api/PlaceTypes
+```
+
+**Response — 200 OK**
+
+```json
+[
+  { "Id": 1, "Name": "Restaurant", "Description": "Food and dining venues" },
+  { "Id": 2, "Name": "Park",       "Description": "Public outdoor spaces" }
+]
+```
+
+<ResponseField name="Id" type="integer">
+  Unique identifier for the place type (`type_id` column).
+</ResponseField>
+
+<ResponseField name="Name" type="string">
+  Short label for the place type (e.g. `"Restaurant"`).
+</ResponseField>
+
+<ResponseField name="Description" type="string">
+  Optional longer description of the place type.
+</ResponseField>
+
+---
+
+### GET /api/PlaceTypes/{id}
+
+Returns a single place type by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The place type ID to look up.
+</ParamField>
+
+```bash
+curl -X GET https://your-api-host/api/PlaceTypes/1
+```
+
+**Response — 200 OK**
+
+Returns an array. If no place type exists with the given ID, the stored procedure returns an empty array.
+
+```json
+[{ "Id": 1, "Name": "Restaurant", "Description": "Food and dining venues" }]
+```
+
+**Response — 500 Internal Server Error**
+
+```json
+{ "message": "Unexpected error", "error": "<database error message>" }
+```
+
+---
+
+### POST /api/PlaceTypes
+
+Creates a new place type.
+
+#### Request body
+
+<ParamField body="Name" type="string" required>
+  A short label for the new place type.
+</ParamField>
+
+<ParamField body="Description" type="string">
+  An optional description that explains what this place type covers.
+</ParamField>
+
+```bash
+curl -X POST https://your-api-host/api/PlaceTypes \
+  -H "Content-Type: application/json" \
+  -d '{ "Name": "Museum", "Description": "Cultural and historical exhibition spaces" }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Place type created successfully" }
+```
+
+---
+
+### PUT /api/PlaceTypes/{id}
+
+Updates an existing place type.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the place type to update.
+</ParamField>
+
+#### Request body
+
+<ParamField body="Name" type="string" required>
+  The updated label for the place type.
+</ParamField>
+
+<ParamField body="Description" type="string">
+  The updated description for the place type.
+</ParamField>
+
+```bash
+curl -X PUT https://your-api-host/api/PlaceTypes/1 \
+  -H "Content-Type: application/json" \
+  -d '{ "Name": "Restaurant", "Description": "Food, dining, and café venues" }'
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Place type updated successfully" }
+```
+
+---
+
+### DELETE /api/PlaceTypes/{id}
+
+Deletes a place type by its ID.
+
+#### Path parameters
+
+<ParamField path="id" type="integer" required>
+  The ID of the place type to delete.
+</ParamField>
+
+```bash
+curl -X DELETE https://your-api-host/api/PlaceTypes/1
+```
+
+**Response — 200 OK**
+
+```json
+{ "message": "Place type deleted successfully" }
+```
+
+---
+
+## Error codes
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Request succeeded. |
+| 500 | A database or server error occurred. The response body contains `message` and `error` fields with details. |

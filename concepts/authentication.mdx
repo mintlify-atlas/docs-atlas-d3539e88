@@ -1,0 +1,111 @@
+---
+title: "Authenticate requests to SolSQL API"
+description: "Learn how to authenticate with SolSQL API by posting email, password, and role to the login endpoint, then handling the returned user object client-side."
+---
+
+SolSQL API uses a credential-based login flow. You send an email address, a plaintext password, and a role identifier to a single endpoint. The API verifies the password against a BCrypt hash stored in the database and returns the matching user record. There are no tokens — your client application is responsible for persisting the user object and managing session state.
+
+## Login endpoint
+
+**POST** `/api/LoginRequest/login`
+
+<Steps>
+  <Step title="Send the login request">
+    Post a JSON body containing `Email`, `Password`, and `Role`.
+
+    ```json
+    {
+      "Email": "user@example.com",
+      "Password": "plaintextpassword",
+      "Role": 1
+    }
+    ```
+
+    | Field | Type | Required | Description |
+    |-------|------|----------|-------------|
+    | `Email` | string | Yes | The user's registered email address |
+    | `Password` | string | Yes | The user's plaintext password (verified against a BCrypt hash) |
+    | `Role` | integer | Yes | `1` for a standard user, `2` for an admin |
+  </Step>
+  <Step title="Receive the user object">
+    On success, the API returns `200 OK` with the user object. The `Password` field is cleared before the response is sent — it will always be `null`.
+
+    ```json
+    {
+      "Id": 42,
+      "Name": "Jane Smith",
+      "Email": "user@example.com",
+      "Password": null,
+      "Role": 1
+    }
+    ```
+  </Step>
+  <Step title="Store session state in your client">
+    Persist the returned user object (for example, in `localStorage`, a cookie, or application state) so you can identify the current user in subsequent requests.
+  </Step>
+</Steps>
+
+## Roles
+
+<Note>
+Role values are numeric integers passed in the `Role` field. Based on the source code, `1` represents a standard user and `2` represents an admin. The API enforces that the `Role` in the request matches the role stored for that user's account — a mismatch returns `401 Unauthorized`.
+</Note>
+
+| Value | Role |
+|-------|------|
+| `1` | User |
+| `2` | Admin |
+
+## Password verification
+
+The API uses **BCrypt.Net** to verify passwords. When you call the login endpoint:
+
+1. The API calls the `sp_login` stored procedure with your email and role to fetch the matching user record.
+2. It compares your plaintext `Password` against the BCrypt hash stored in the database using `BCrypt.Verify`.
+3. If the hash does not match, the API returns `401 Unauthorized` with `"Invalid credentials"`.
+
+You never need to hash passwords on the client — always send the plaintext password over HTTPS.
+
+## curl example
+
+```bash
+curl -X POST "http://<host>/api/LoginRequest/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Email": "user@example.com",
+    "Password": "plaintextpassword",
+    "Role": 1
+  }'
+```
+
+## Error responses
+
+| HTTP status | Condition |
+|-------------|-----------|
+| `200 OK` | Credentials and role are valid; user object returned |
+| `401 Unauthorized` | User not found, role mismatch, or incorrect password |
+| `500 Internal Server Error` | Database or unexpected server error |
+
+A `401 Unauthorized` response body includes a `message` field describing the reason:
+
+```json
+{ "message": "User not found" }
+```
+
+```json
+{ "message": "Invalid role" }
+```
+
+```json
+{ "message": "Invalid credentials" }
+```
+
+<Warning>
+SolSQL API does **not** issue JWT tokens or any bearer token. The login response is the raw user object. Your client application must handle session persistence — for example, storing the user's `Id` and `Role` locally and clearing them on logout. Do not assume that subsequent API calls are automatically authenticated.
+</Warning>
+
+## Security recommendations
+
+<Tip>
+Always call the login endpoint over HTTPS in production. The `Password` field is sent as plaintext in the request body, so TLS is the only protection against credential interception in transit.
+</Tip>
